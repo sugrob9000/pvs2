@@ -1,0 +1,7 @@
+Debug/
+Release/
+Drivers/
+.settings/
+.cproject
+.mxproject
+.project
