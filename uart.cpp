@@ -1,7 +1,8 @@
 #include "main.h"
-#include "task.hpp"
 #include "uart.hpp"
 #include <usart.h>
+
+using std::string_view;
 
 namespace uart {
 namespace {
@@ -24,7 +25,9 @@ struct Channel {
     if (head == tail) {
       return 0;
     } else {
-      return mem[std::exchange(head, (head + 1) % size)];
+      char c = mem[head];
+      head = (head + 1) % size;
+      return c;
     }
   }
 };
@@ -57,7 +60,7 @@ char recv_char() {
 
 } // namespace
 
-std::string_view recv(std::span<char> buf) {
+string_view recv(std::span<char> buf) {
   char* const begin = buf.data();
   char* const end = begin + buf.size();
   char* it = begin;
@@ -67,7 +70,7 @@ std::string_view recv(std::span<char> buf) {
     if (c == 0) {
       continue;
     }
-    send(std::string_view(&c, &c+1));
+    send(string_view(&c, &c+1));
     if (c == '\r') {
       send("\n");
       break;
@@ -75,7 +78,7 @@ std::string_view recv(std::span<char> buf) {
     *it++ = c;
   }
 
-  return std::string_view(begin, it);
+  return string_view(begin, it);
 }
 
 extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef* u) {
@@ -87,7 +90,7 @@ extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef* u) {
 }
 
 
-void send(std::string_view line) {
+void send(string_view line) {
   if (use_irq) {
     auto no_irq = IrqGuard();
     for (char c: line) {
@@ -114,7 +117,7 @@ extern "C" void HAL_UART_TxCpltCallback(UART_HandleTypeDef* u) {
   }
 }
 
-void sendln(std::string_view line) {
+void sendln(string_view line) {
   send(line);
   send("\r\n");
 }

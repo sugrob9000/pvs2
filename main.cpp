@@ -105,9 +105,12 @@ bool toggle_request = false;
 
 } // namespace
 
-extern "C"
-int main() {
-  init_all();
+extern "C" void main() {
+  {
+    extern "C" void init_all();
+    init_all();
+  }
+
   char buf[128];
   while (true) {
     if (std::exchange(toggle_request, false)) {
